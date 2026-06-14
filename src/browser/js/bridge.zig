@@ -921,6 +921,21 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/element/svg/Polyline.zig"),
     @import("../webapi/element/svg/Polygon.zig"),
     @import("../webapi/element/svg/Path.zig"),
+    // SVG structure
+    @import("../webapi/element/svg/G.zig"),
+    @import("../webapi/element/svg/Defs.zig"),
+    @import("../webapi/element/svg/Symbol.zig"),
+    @import("../webapi/element/svg/Use.zig"),
+    @import("../webapi/element/svg/Switch.zig"),
+    @import("../webapi/element/svg/ForeignObject.zig"),
+    @import("../webapi/element/svg/Image.zig"),
+    // SVG descriptive
+    @import("../webapi/element/svg/Desc.zig"),
+    @import("../webapi/element/svg/Title.zig"),
+    @import("../webapi/element/svg/Metadata.zig"),
+    // SVG linking + styling
+    @import("../webapi/element/svg/A.zig"),
+    @import("../webapi/element/svg/View.zig"),
     // SVG data types
     @import("../webapi/svg_types/SVGNumber.zig"),
     @import("../webapi/svg_types/SVGLength.zig"),
