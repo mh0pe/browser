@@ -23,6 +23,10 @@ const js = @import("../../js/js.zig");
 const Node = @import("../Node.zig");
 const Element = @import("../Element.zig");
 pub const Generic = @import("svg/Generic.zig");
+pub const Unknown = @import("svg/Unknown.zig");
+pub const GraphicsElement = @import("svg/GraphicsElement.zig");
+pub const GeometryElement = @import("svg/GeometryElement.zig");
+pub const SvgSvg = @import("svg/SvgSvg.zig");
 
 const String = lp.String;
 
@@ -32,8 +36,9 @@ _proto: *Element,
 _tag_name: String, // Svg elements are case-preserving
 
 pub const Type = union(enum) {
-    svg,
+    svg: *SvgSvg,
     generic: *Generic,
+    unknown: *Unknown,
 };
 
 pub fn is(self: *Svg, comptime T: type) ?*T {

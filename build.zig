@@ -181,6 +181,7 @@ pub fn build(b: *Build) !void {
             .use_llvm = true,
             .test_runner = .{ .path = b.path("src/test_runner.zig"), .mode = .simple },
         });
+        tests.root_module.strip = true;
         const run_tests = b.addRunArtifact(tests);
         const test_step = b.step("test", "Run unit tests");
         test_step.dependOn(&run_tests.step);
