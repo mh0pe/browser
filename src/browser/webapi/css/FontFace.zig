@@ -27,13 +27,29 @@ const Allocator = std.mem.Allocator;
 
 const FontFace = @This();
 
+pub const Status = enum {
+    unloaded,
+    loading,
+    loaded,
+    @"error",
+
+    pub fn toStr(self: Status) []const u8 {
+        return switch (self) {
+            .unloaded => "unloaded",
+            .loading => "loading",
+            .loaded => "loaded",
+            .@"error" => "error",
+        };
+    }
+};
+
 _rc: lp.RC(u8) = .{},
 _arena: Allocator,
 _family: []const u8,
+_source: []const u8,
+_status: Status,
 
 pub fn init(family: []const u8, source: []const u8, frame: *Frame) !*FontFace {
-    _ = source;
-
     const arena = try frame.getArena(.tiny, "FontFace");
     errdefer frame.releaseArena(arena);
 
@@ -41,6 +57,8 @@ pub fn init(family: []const u8, source: []const u8, frame: *Frame) !*FontFace {
     self.* = .{
         ._arena = arena,
         ._family = try arena.dupe(u8, family),
+        ._source = try arena.dupe(u8, source),
+        ._status = .unloaded,
     };
     return self;
 }
@@ -61,13 +79,23 @@ pub fn getFamily(self: *const FontFace) []const u8 {
     return self._family;
 }
 
-// load() - resolves immediately; headless browser has no real font loading.
-pub fn load(_: *FontFace, frame: *Frame) !js.Promise {
+pub fn getStatus(self: *const FontFace) []const u8 {
+    return self._status.toStr();
+}
+
+// load() - transitions status to loading then loaded.
+// Actual network fetch deferred until TextShaper is wired in.
+pub fn load(self: *FontFace, frame: *Frame) !js.Promise {
+    self._status = .loading;
+    self._status = .loaded;
     return frame.js.local.?.resolvePromise({});
 }
 
-// loaded - returns an already-resolved Promise.
-pub fn getLoaded(_: *FontFace, frame: *Frame) !js.Promise {
+// loaded - returns a resolved Promise once status is loaded.
+pub fn getLoaded(self: *FontFace, frame: *Frame) !js.Promise {
+    if (self._status != .loaded) {
+        _ = try self.load(frame);
+    }
     return frame.js.local.?.resolvePromise({});
 }
 
@@ -82,7 +110,7 @@ pub const JsApi = struct {
 
     pub const constructor = bridge.constructor(FontFace.init, .{});
     pub const family = bridge.accessor(FontFace.getFamily, null, .{});
-    pub const status = bridge.property("loaded", .{ .template = false, .readonly = true });
+    pub const status = bridge.accessor(FontFace.getStatus, null, .{});
     pub const style = bridge.property("normal", .{ .template = false, .readonly = true });
     pub const weight = bridge.property("normal", .{ .template = false, .readonly = true });
     pub const stretch = bridge.property("normal", .{ .template = false, .readonly = true });

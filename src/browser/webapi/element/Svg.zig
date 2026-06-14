@@ -46,6 +46,11 @@ pub const View = @import("svg/View.zig");
 pub const Desc = @import("svg/Desc.zig");
 pub const Title = @import("svg/Title.zig");
 pub const Metadata = @import("svg/Metadata.zig");
+pub const TextContent = @import("svg/TextContent.zig");
+pub const TextPositioning = @import("svg/TextPositioning.zig");
+pub const Text = @import("svg/Text.zig");
+pub const TSpan = @import("svg/TSpan.zig");
+pub const TextPath = @import("svg/TextPath.zig");
 
 const String = lp.String;
 
@@ -77,6 +82,9 @@ pub const Type = union(enum) {
     desc: *Desc,
     title: *Title,
     metadata: *Metadata,
+    text: *Text,
+    tspan: *TSpan,
+    text_path: *TextPath,
 };
 
 pub fn is(self: *Svg, comptime T: type) ?*T {

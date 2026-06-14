@@ -2860,6 +2860,9 @@ pub fn createElementNS(self: *Frame, namespace: Element.Namespace, name: []const
                 .metadata => self.createSvgElementT(Element.Svg.Metadata, name, attribute_iterator, .{ ._proto = undefined }),
                 .svg_a => self.createSvgElementT(Element.Svg.A, name, attribute_iterator, .{ ._proto = undefined }),
                 .view => self.createSvgElementT(Element.Svg.View, name, attribute_iterator, .{ ._proto = undefined }),
+                .text => self.createSvgElementT(Element.Svg.Text, name, attribute_iterator, .{ ._proto = undefined }),
+                .tspan => self.createSvgElementT(Element.Svg.TSpan, name, attribute_iterator, .{ ._proto = undefined }),
+                .textpath => self.createSvgElementT(Element.Svg.TextPath, name, attribute_iterator, .{ ._proto = undefined }),
                 else => self.createSvgElementT(Element.Svg.Unknown, name, attribute_iterator, .{ ._proto = undefined, ._tag_name = tag_name }),
             };
         },

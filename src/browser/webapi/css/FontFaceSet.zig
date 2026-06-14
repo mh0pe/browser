@@ -35,6 +35,7 @@ const FontFaceSet = @This();
 _rc: lp.RC(u8) = .{},
 _proto: *EventTarget,
 _arena: Allocator,
+_faces: std.ArrayList(*FontFace) = .empty,
 
 pub fn init(frame: *Frame) !*FontFaceSet {
     const arena = try frame.getArena(.tiny, "FontFaceSet");
@@ -43,6 +44,7 @@ pub fn init(frame: *Frame) !*FontFaceSet {
     return frame._factory.eventTargetWithAllocator(arena, FontFaceSet{
         ._proto = undefined,
         ._arena = arena,
+        ._faces = .empty,
     });
 }
 
@@ -62,32 +64,48 @@ pub fn asEventTarget(self: *FontFaceSet) *EventTarget {
     return self._proto;
 }
 
+pub fn getSize(self: *const FontFaceSet) u32 {
+    return @intCast(self._faces.items.len);
+}
+
+pub fn getStatus(self: *const FontFaceSet) []const u8 {
+    for (self._faces.items) |face| {
+        if (face._status == .loading) return "loading";
+    }
+    return "loaded";
+}
+
 // FontFaceSet.ready - returns an already-resolved Promise.
-// In a headless browser there is no font loading, so fonts are always ready.
 pub fn getReady(_: *FontFaceSet, frame: *Frame) !js.Promise {
     return frame.js.local.?.resolvePromise({});
 }
 
-// check(font, text?) - always true; headless has no real fonts to check.
-pub fn check(_: *const FontFaceSet, font: []const u8) bool {
-    _ = font;
-    return true;
+// check(font, text?) - returns true if any added face's family appears in the font string.
+pub fn check(self: *const FontFaceSet, font: []const u8) bool {
+    if (self._faces.items.len == 0) return true;
+    for (self._faces.items) |face| {
+        if (std.mem.indexOf(u8, font, face._family) != null) return true;
+    }
+    return false;
 }
 
-// load(font, text?) - resolves immediately with an empty array.
+// load(font, text?) - triggers loading of matching unloaded faces.
 pub fn load(self: *FontFaceSet, font: []const u8, frame: *Frame) !js.Promise {
-    // TODO parse font to check if the font has been added before dispatching
-    // events.
-    _ = font;
-
-    // Dispatch loading event
     const target = self.asEventTarget();
+
     if (frame._event_manager.hasDirectListeners(target, "loading", null)) {
         const event = try Event.initTrusted(comptime .wrap("loading"), .{}, frame._page);
         try frame._event_manager.dispatchDirect(target, event, null, .{ .context = "load font face set" });
     }
 
-    // Dispatch loadingdone event
+    for (self._faces.items) |face| {
+        if (face._status == .unloaded) {
+            if (std.mem.indexOf(u8, font, face._family) != null) {
+                _ = try face.load(frame);
+            }
+        }
+    }
+
     if (frame._event_manager.hasDirectListeners(target, "loadingdone", null)) {
         const event = try Event.initTrusted(comptime .wrap("loadingdone"), .{}, frame._page);
         try frame._event_manager.dispatchDirect(target, event, null, .{ .context = "load font face set" });
@@ -96,8 +114,9 @@ pub fn load(self: *FontFaceSet, font: []const u8, frame: *Frame) !js.Promise {
     return frame.js.local.?.resolvePromise({});
 }
 
-// add(fontFace) - no-op; headless browser does not track loaded fonts.
-pub fn add(self: *FontFaceSet, _: *FontFace) *FontFaceSet {
+// add(fontFace) - stores the face in the set.
+pub fn add(self: *FontFaceSet, face: *FontFace) !*FontFaceSet {
+    try self._faces.append(self._arena, face);
     return self;
 }
 
@@ -110,8 +129,8 @@ pub const JsApi = struct {
         pub var class_id: bridge.ClassId = undefined;
     };
 
-    pub const size = bridge.property(0, .{ .template = false, .readonly = true });
-    pub const status = bridge.property("loaded", .{ .template = false, .readonly = true });
+    pub const size = bridge.accessor(FontFaceSet.getSize, null, .{});
+    pub const status = bridge.accessor(FontFaceSet.getStatus, null, .{});
     pub const ready = bridge.accessor(FontFaceSet.getReady, null, .{});
     pub const check = bridge.function(FontFaceSet.check, .{});
     pub const load = bridge.function(FontFaceSet.load, .{});

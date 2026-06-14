@@ -936,6 +936,12 @@ pub const PageJsApis = flattenTypes(&.{
     // SVG linking + styling
     @import("../webapi/element/svg/A.zig"),
     @import("../webapi/element/svg/View.zig"),
+    // SVG text
+    @import("../webapi/element/svg/TextContent.zig"),
+    @import("../webapi/element/svg/TextPositioning.zig"),
+    @import("../webapi/element/svg/Text.zig"),
+    @import("../webapi/element/svg/TSpan.zig"),
+    @import("../webapi/element/svg/TextPath.zig"),
     // SVG data types
     @import("../webapi/svg_types/SVGNumber.zig"),
     @import("../webapi/svg_types/SVGLength.zig"),
@@ -1043,6 +1049,7 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/navigation/NavigationHistoryEntry.zig"),
     @import("../webapi/navigation/NavigationActivation.zig"),
     @import("../webapi/canvas/CanvasRenderingContext2D.zig"),
+    @import("../webapi/canvas/TextMetrics.zig"),
     @import("../webapi/canvas/WebGLRenderingContext.zig"),
     @import("../webapi/canvas/OffscreenCanvas.zig"),
     @import("../webapi/canvas/OffscreenCanvasRenderingContext2D.zig"),

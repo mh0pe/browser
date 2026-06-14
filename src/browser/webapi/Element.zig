@@ -1740,6 +1740,9 @@ pub fn getTag(self: *const Element) Tag {
             .desc => .desc,
             .title => .title,
             .metadata => .metadata,
+            .text => .text,
+            .tspan => .tspan,
+            .text_path => .textpath,
         },
     };
 }
@@ -1854,9 +1857,11 @@ pub const Tag = enum {
     @"switch",
     table,
     time,
+    tspan,
     tbody,
     td,
     text,
+    textpath,
     template,
     textarea,
     tfoot,
