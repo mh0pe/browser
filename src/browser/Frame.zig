@@ -2841,6 +2841,13 @@ pub fn createElementNS(self: *Frame, namespace: Element.Namespace, name: []const
 
             return switch (tag) {
                 .svg => self.createSvgElementT(Element.Svg.SvgSvg, name, attribute_iterator, .{ ._proto = undefined }),
+                .rect => self.createSvgElementT(Element.Svg.Rect, name, attribute_iterator, .{ ._proto = undefined }),
+                .circle => self.createSvgElementT(Element.Svg.Circle, name, attribute_iterator, .{ ._proto = undefined }),
+                .ellipse => self.createSvgElementT(Element.Svg.Ellipse, name, attribute_iterator, .{ ._proto = undefined }),
+                .line => self.createSvgElementT(Element.Svg.Line, name, attribute_iterator, .{ ._proto = undefined }),
+                .polyline => self.createSvgElementT(Element.Svg.Polyline, name, attribute_iterator, .{ ._proto = undefined }),
+                .polygon => self.createSvgElementT(Element.Svg.Polygon, name, attribute_iterator, .{ ._proto = undefined }),
+                .path => self.createSvgElementT(Element.Svg.Path, name, attribute_iterator, .{ ._proto = undefined }),
                 else => self.createSvgElementT(Element.Svg.Unknown, name, attribute_iterator, .{ ._proto = undefined, ._tag_name = tag_name }),
             };
         },

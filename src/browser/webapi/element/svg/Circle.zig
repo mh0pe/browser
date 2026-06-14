@@ -28,28 +28,25 @@ const DOMRect = @import("../../DOMRect.zig");
 const String = @import("../../../../string.zig").String;
 const SVGAnimatedLength = @import("../../svg_types/SVGAnimatedLength.zig");
 
-const Rect = @This();
+const Circle = @This();
 _proto: *GeometryElement,
-_x: SVGAnimatedLength = .{},
-_y: SVGAnimatedLength = .{},
-_width: SVGAnimatedLength = .{},
-_height: SVGAnimatedLength = .{},
-_rx: SVGAnimatedLength = .{},
-_ry: SVGAnimatedLength = .{},
+_cx: SVGAnimatedLength = .{},
+_cy: SVGAnimatedLength = .{},
+_r: SVGAnimatedLength = .{},
 
-pub fn asGraphics(self: *Rect) *GraphicsElement {
+pub fn asGraphics(self: *Circle) *GraphicsElement {
     return self._proto._proto;
 }
-pub fn asSvg(self: *Rect) *Svg {
+pub fn asSvg(self: *Circle) *Svg {
     return self.asGraphics()._proto;
 }
-pub fn asElement(self: *Rect) *Element {
+pub fn asElement(self: *Circle) *Element {
     return self.asSvg()._proto;
 }
-pub fn asConstElement(self: *const Rect) *const Element {
+pub fn asConstElement(self: *const Circle) *const Element {
     return @as(*const GraphicsElement, self._proto._proto)._proto._proto;
 }
-pub fn asNode(self: *Rect) *Node {
+pub fn asNode(self: *Circle) *Node {
     return self.asElement().asNode();
 }
 
@@ -72,59 +69,38 @@ fn getFloatAttr(element: *const Element, comptime name: []const u8) f64 {
     return std.fmt.parseFloat(f64, val[0..end]) catch 0;
 }
 
-pub fn get_x(self: *Rect) *SVGAnimatedLength {
-    if (self._x._base_val._element == null) self._x = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("x"));
-    return &self._x;
+pub fn get_cx(self: *Circle) *SVGAnimatedLength {
+    if (self._cx._base_val._element == null) self._cx = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("cx"));
+    return &self._cx;
 }
 
-pub fn get_y(self: *Rect) *SVGAnimatedLength {
-    if (self._y._base_val._element == null) self._y = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("y"));
-    return &self._y;
+pub fn get_cy(self: *Circle) *SVGAnimatedLength {
+    if (self._cy._base_val._element == null) self._cy = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("cy"));
+    return &self._cy;
 }
 
-pub fn get_width(self: *Rect) *SVGAnimatedLength {
-    if (self._width._base_val._element == null) self._width = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("width"));
-    return &self._width;
+pub fn get_r(self: *Circle) *SVGAnimatedLength {
+    if (self._r._base_val._element == null) self._r = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("r"));
+    return &self._r;
 }
 
-pub fn get_height(self: *Rect) *SVGAnimatedLength {
-    if (self._height._base_val._element == null) self._height = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("height"));
-    return &self._height;
-}
-
-pub fn get_rx(self: *Rect) *SVGAnimatedLength {
-    if (self._rx._base_val._element == null) self._rx = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("rx"));
-    return &self._rx;
-}
-
-pub fn get_ry(self: *Rect) *SVGAnimatedLength {
-    if (self._ry._base_val._element == null) self._ry = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("ry"));
-    return &self._ry;
-}
-
-pub fn getBBox(self: *Rect, frame: *Frame) !*DOMRect {
+pub fn getBBox(self: *Circle, frame: *Frame) !*DOMRect {
     const el = self.asConstElement();
-    return DOMRect.init(
-        getFloatAttr(el, "x"),
-        getFloatAttr(el, "y"),
-        getFloatAttr(el, "width"),
-        getFloatAttr(el, "height"),
-        frame,
-    );
+    const cx = getFloatAttr(el, "cx");
+    const cy = getFloatAttr(el, "cy");
+    const r = @max(getFloatAttr(el, "r"), 0);
+    return DOMRect.init(cx - r, cy - r, 2 * r, 2 * r, frame);
 }
 
 pub const JsApi = struct {
-    pub const bridge = js.Bridge(Rect);
+    pub const bridge = js.Bridge(Circle);
     pub const Meta = struct {
-        pub const name = "SVGRectElement";
+        pub const name = "SVGCircleElement";
         pub const prototype_chain = bridge.prototypeChain();
         pub var class_id: bridge.ClassId = undefined;
     };
-    pub const getBBox = bridge.function(Rect.getBBox, .{});
-    pub const x = bridge.accessor(Rect.get_x, null, .{});
-    pub const y = bridge.accessor(Rect.get_y, null, .{});
-    pub const width = bridge.accessor(Rect.get_width, null, .{});
-    pub const height = bridge.accessor(Rect.get_height, null, .{});
-    pub const rx = bridge.accessor(Rect.get_rx, null, .{});
-    pub const ry = bridge.accessor(Rect.get_ry, null, .{});
+    pub const getBBox = bridge.function(Circle.getBBox, .{});
+    pub const cx = bridge.accessor(Circle.get_cx, null, .{});
+    pub const cy = bridge.accessor(Circle.get_cy, null, .{});
+    pub const r = bridge.accessor(Circle.get_r, null, .{});
 };

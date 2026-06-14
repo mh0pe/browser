@@ -28,28 +28,26 @@ const DOMRect = @import("../../DOMRect.zig");
 const String = @import("../../../../string.zig").String;
 const SVGAnimatedLength = @import("../../svg_types/SVGAnimatedLength.zig");
 
-const Rect = @This();
+const Line = @This();
 _proto: *GeometryElement,
-_x: SVGAnimatedLength = .{},
-_y: SVGAnimatedLength = .{},
-_width: SVGAnimatedLength = .{},
-_height: SVGAnimatedLength = .{},
-_rx: SVGAnimatedLength = .{},
-_ry: SVGAnimatedLength = .{},
+_x1: SVGAnimatedLength = .{},
+_y1: SVGAnimatedLength = .{},
+_x2: SVGAnimatedLength = .{},
+_y2: SVGAnimatedLength = .{},
 
-pub fn asGraphics(self: *Rect) *GraphicsElement {
+pub fn asGraphics(self: *Line) *GraphicsElement {
     return self._proto._proto;
 }
-pub fn asSvg(self: *Rect) *Svg {
+pub fn asSvg(self: *Line) *Svg {
     return self.asGraphics()._proto;
 }
-pub fn asElement(self: *Rect) *Element {
+pub fn asElement(self: *Line) *Element {
     return self.asSvg()._proto;
 }
-pub fn asConstElement(self: *const Rect) *const Element {
+pub fn asConstElement(self: *const Line) *const Element {
     return @as(*const GraphicsElement, self._proto._proto)._proto._proto;
 }
-pub fn asNode(self: *Rect) *Node {
+pub fn asNode(self: *Line) *Node {
     return self.asElement().asNode();
 }
 
@@ -72,59 +70,45 @@ fn getFloatAttr(element: *const Element, comptime name: []const u8) f64 {
     return std.fmt.parseFloat(f64, val[0..end]) catch 0;
 }
 
-pub fn get_x(self: *Rect) *SVGAnimatedLength {
-    if (self._x._base_val._element == null) self._x = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("x"));
-    return &self._x;
+pub fn get_x1(self: *Line) *SVGAnimatedLength {
+    if (self._x1._base_val._element == null) self._x1 = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("x1"));
+    return &self._x1;
 }
 
-pub fn get_y(self: *Rect) *SVGAnimatedLength {
-    if (self._y._base_val._element == null) self._y = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("y"));
-    return &self._y;
+pub fn get_y1(self: *Line) *SVGAnimatedLength {
+    if (self._y1._base_val._element == null) self._y1 = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("y1"));
+    return &self._y1;
 }
 
-pub fn get_width(self: *Rect) *SVGAnimatedLength {
-    if (self._width._base_val._element == null) self._width = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("width"));
-    return &self._width;
+pub fn get_x2(self: *Line) *SVGAnimatedLength {
+    if (self._x2._base_val._element == null) self._x2 = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("x2"));
+    return &self._x2;
 }
 
-pub fn get_height(self: *Rect) *SVGAnimatedLength {
-    if (self._height._base_val._element == null) self._height = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("height"));
-    return &self._height;
+pub fn get_y2(self: *Line) *SVGAnimatedLength {
+    if (self._y2._base_val._element == null) self._y2 = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("y2"));
+    return &self._y2;
 }
 
-pub fn get_rx(self: *Rect) *SVGAnimatedLength {
-    if (self._rx._base_val._element == null) self._rx = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("rx"));
-    return &self._rx;
-}
-
-pub fn get_ry(self: *Rect) *SVGAnimatedLength {
-    if (self._ry._base_val._element == null) self._ry = SVGAnimatedLength.init(self.asElement(), comptime String.wrap("ry"));
-    return &self._ry;
-}
-
-pub fn getBBox(self: *Rect, frame: *Frame) !*DOMRect {
+pub fn getBBox(self: *Line, frame: *Frame) !*DOMRect {
     const el = self.asConstElement();
-    return DOMRect.init(
-        getFloatAttr(el, "x"),
-        getFloatAttr(el, "y"),
-        getFloatAttr(el, "width"),
-        getFloatAttr(el, "height"),
-        frame,
-    );
+    const x1 = getFloatAttr(el, "x1");
+    const y1 = getFloatAttr(el, "y1");
+    const x2 = getFloatAttr(el, "x2");
+    const y2 = getFloatAttr(el, "y2");
+    return DOMRect.init(@min(x1, x2), @min(y1, y2), @abs(x2 - x1), @abs(y2 - y1), frame);
 }
 
 pub const JsApi = struct {
-    pub const bridge = js.Bridge(Rect);
+    pub const bridge = js.Bridge(Line);
     pub const Meta = struct {
-        pub const name = "SVGRectElement";
+        pub const name = "SVGLineElement";
         pub const prototype_chain = bridge.prototypeChain();
         pub var class_id: bridge.ClassId = undefined;
     };
-    pub const getBBox = bridge.function(Rect.getBBox, .{});
-    pub const x = bridge.accessor(Rect.get_x, null, .{});
-    pub const y = bridge.accessor(Rect.get_y, null, .{});
-    pub const width = bridge.accessor(Rect.get_width, null, .{});
-    pub const height = bridge.accessor(Rect.get_height, null, .{});
-    pub const rx = bridge.accessor(Rect.get_rx, null, .{});
-    pub const ry = bridge.accessor(Rect.get_ry, null, .{});
+    pub const getBBox = bridge.function(Line.getBBox, .{});
+    pub const x1 = bridge.accessor(Line.get_x1, null, .{});
+    pub const y1 = bridge.accessor(Line.get_y1, null, .{});
+    pub const x2 = bridge.accessor(Line.get_x2, null, .{});
+    pub const y2 = bridge.accessor(Line.get_y2, null, .{});
 };
