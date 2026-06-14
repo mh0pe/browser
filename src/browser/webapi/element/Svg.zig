@@ -34,6 +34,18 @@ pub const Line = @import("svg/Line.zig");
 pub const Polyline = @import("svg/Polyline.zig");
 pub const Polygon = @import("svg/Polygon.zig");
 pub const Path = @import("svg/Path.zig");
+pub const G = @import("svg/G.zig");
+pub const Defs = @import("svg/Defs.zig");
+pub const Symbol = @import("svg/Symbol.zig");
+pub const Use = @import("svg/Use.zig");
+pub const Switch = @import("svg/Switch.zig");
+pub const ForeignObject = @import("svg/ForeignObject.zig");
+pub const Image = @import("svg/Image.zig");
+pub const A = @import("svg/A.zig");
+pub const View = @import("svg/View.zig");
+pub const Desc = @import("svg/Desc.zig");
+pub const Title = @import("svg/Title.zig");
+pub const Metadata = @import("svg/Metadata.zig");
 
 const String = lp.String;
 
@@ -53,6 +65,18 @@ pub const Type = union(enum) {
     polyline: *Polyline,
     polygon: *Polygon,
     path: *Path,
+    g: *G,
+    defs: *Defs,
+    symbol: *Symbol,
+    use: *Use,
+    @"switch": *Switch,
+    foreign_object: *ForeignObject,
+    image: *Image,
+    a: *A,
+    view: *View,
+    desc: *Desc,
+    title: *Title,
+    metadata: *Metadata,
 };
 
 pub fn is(self: *Svg, comptime T: type) ?*T {
