@@ -22,11 +22,11 @@ const js = @import("../../js/js.zig");
 
 const Node = @import("../Node.zig");
 const Element = @import("../Element.zig");
+
 pub const Generic = @import("svg/Generic.zig");
 pub const Unknown = @import("svg/Unknown.zig");
 pub const GraphicsElement = @import("svg/GraphicsElement.zig");
 pub const GeometryElement = @import("svg/GeometryElement.zig");
-pub const SvgSvg = @import("svg/SvgSvg.zig");
 pub const Rect = @import("svg/Rect.zig");
 pub const Circle = @import("svg/Circle.zig");
 pub const Ellipse = @import("svg/Ellipse.zig");
@@ -34,6 +34,7 @@ pub const Line = @import("svg/Line.zig");
 pub const Polyline = @import("svg/Polyline.zig");
 pub const Polygon = @import("svg/Polygon.zig");
 pub const Path = @import("svg/Path.zig");
+pub const SvgSvg = @import("svg/SvgSvg.zig");
 pub const G = @import("svg/G.zig");
 pub const Defs = @import("svg/Defs.zig");
 pub const Symbol = @import("svg/Symbol.zig");
@@ -41,8 +42,6 @@ pub const Use = @import("svg/Use.zig");
 pub const Switch = @import("svg/Switch.zig");
 pub const ForeignObject = @import("svg/ForeignObject.zig");
 pub const Image = @import("svg/Image.zig");
-pub const A = @import("svg/A.zig");
-pub const View = @import("svg/View.zig");
 pub const Desc = @import("svg/Desc.zig");
 pub const Title = @import("svg/Title.zig");
 pub const Metadata = @import("svg/Metadata.zig");
@@ -51,6 +50,18 @@ pub const TextPositioning = @import("svg/TextPositioning.zig");
 pub const Text = @import("svg/Text.zig");
 pub const TSpan = @import("svg/TSpan.zig");
 pub const TextPath = @import("svg/TextPath.zig");
+pub const A = @import("svg/A.zig");
+pub const View = @import("svg/View.zig");
+pub const SvgScript = @import("svg/SvgScript.zig");
+pub const SvgStyle = @import("svg/SvgStyle.zig");
+pub const GradientElement = @import("svg/GradientElement.zig");
+pub const LinearGradient = @import("svg/LinearGradient.zig");
+pub const RadialGradient = @import("svg/RadialGradient.zig");
+pub const Stop = @import("svg/Stop.zig");
+pub const Pattern = @import("svg/Pattern.zig");
+pub const ClipPath = @import("svg/ClipPath.zig");
+pub const Mask = @import("svg/Mask.zig");
+pub const Marker = @import("svg/Marker.zig");
 pub const Filter = @import("svg/Filter.zig");
 pub const FEBlend = @import("svg/fe/Blend.zig");
 pub const FEColorMatrix = @import("svg/fe/ColorMatrix.zig");
@@ -77,6 +88,12 @@ pub const FESpecularLighting = @import("svg/fe/SpecularLighting.zig");
 pub const FESpotLight = @import("svg/fe/SpotLight.zig");
 pub const FETile = @import("svg/fe/Tile.zig");
 pub const FETurbulence = @import("svg/fe/Turbulence.zig");
+pub const AnimationElement = @import("svg/AnimationElement.zig");
+pub const Animate = @import("svg/Animate.zig");
+pub const AnimateSet = @import("svg/AnimateSet.zig");
+pub const AnimateMotion = @import("svg/AnimateMotion.zig");
+pub const AnimateTransform = @import("svg/AnimateTransform.zig");
+pub const MPath = @import("svg/MPath.zig");
 
 const String = lp.String;
 
@@ -103,14 +120,23 @@ pub const Type = union(enum) {
     @"switch": *Switch,
     foreign_object: *ForeignObject,
     image: *Image,
-    a: *A,
-    view: *View,
     desc: *Desc,
     title: *Title,
     metadata: *Metadata,
     text: *Text,
     tspan: *TSpan,
     text_path: *TextPath,
+    a: *A,
+    view: *View,
+    svg_script: *SvgScript,
+    svg_style: *SvgStyle,
+    linear_gradient: *LinearGradient,
+    radial_gradient: *RadialGradient,
+    stop: *Stop,
+    pattern: *Pattern,
+    clip_path: *ClipPath,
+    mask: *Mask,
+    marker: *Marker,
     filter: *Filter,
     fe_blend: *FEBlend,
     fe_color_matrix: *FEColorMatrix,
@@ -137,6 +163,11 @@ pub const Type = union(enum) {
     fe_spot_light: *FESpotLight,
     fe_tile: *FETile,
     fe_turbulence: *FETurbulence,
+    animate: *Animate,
+    animate_set: *AnimateSet,
+    animate_motion: *AnimateMotion,
+    animate_transform: *AnimateTransform,
+    mpath: *MPath,
 };
 
 pub fn is(self: *Svg, comptime T: type) ?*T {

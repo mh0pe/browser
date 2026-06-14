@@ -429,6 +429,40 @@ pub fn svgElement(self: *Factory, tag_name: []const u8, child: anytype) !*@TypeO
         chain.setProto(6);
         chain.setLeaf(7, child);
         return chain.get(7);
+    } else if (ProtoType == *Element.Svg.AnimationElement) {
+        // 6-level: EventTarget→Node→Element→Svg→AnimationElement→Child
+        const chain = try PrototypeChain(
+            &.{ EventTarget, Node, Element, Element.Svg, Element.Svg.AnimationElement, ChildT },
+        ).allocate(allocator);
+
+        chain.setRoot(EventTarget.Type);
+        chain.setMiddle(1, Node.Type);
+        chain.setMiddle(2, Element.Type);
+        chain.set(3, .{
+            ._proto = chain.get(2),
+            ._tag_name = tag_name_str,
+            ._type = unionInit(Element.Svg.Type, chain.get(5)),
+        });
+        chain.setProto(4);
+        chain.setLeaf(5, child);
+        return chain.get(5);
+    } else if (ProtoType == *Element.Svg.GradientElement) {
+        // 6-level: EventTarget→Node→Element→Svg→GradientElement→Child
+        const chain = try PrototypeChain(
+            &.{ EventTarget, Node, Element, Element.Svg, Element.Svg.GradientElement, ChildT },
+        ).allocate(allocator);
+
+        chain.setRoot(EventTarget.Type);
+        chain.setMiddle(1, Node.Type);
+        chain.setMiddle(2, Element.Type);
+        chain.set(3, .{
+            ._proto = chain.get(2),
+            ._tag_name = tag_name_str,
+            ._type = unionInit(Element.Svg.Type, chain.get(5)),
+        });
+        chain.setProto(4);
+        chain.setLeaf(5, child);
+        return chain.get(5);
     } else {
         // 5-level: EventTarget→Node→Element→Svg→Child
         const chain = try PrototypeChain(
