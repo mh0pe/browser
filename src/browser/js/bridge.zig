@@ -907,12 +907,12 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/element/html/UL.zig"),
     @import("../webapi/element/html/Unknown.zig"),
     @import("../webapi/element/html/ValidityState.zig"),
+    // SVG base + intermediate
     @import("../webapi/element/Svg.zig"),
     @import("../webapi/element/svg/Generic.zig"),
     @import("../webapi/element/svg/Unknown.zig"),
     @import("../webapi/element/svg/GraphicsElement.zig"),
     @import("../webapi/element/svg/GeometryElement.zig"),
-    @import("../webapi/element/svg/SvgSvg.zig"),
     // SVG shapes
     @import("../webapi/element/svg/Rect.zig"),
     @import("../webapi/element/svg/Circle.zig"),
@@ -922,6 +922,7 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/element/svg/Polygon.zig"),
     @import("../webapi/element/svg/Path.zig"),
     // SVG structure
+    @import("../webapi/element/svg/SvgSvg.zig"),
     @import("../webapi/element/svg/G.zig"),
     @import("../webapi/element/svg/Defs.zig"),
     @import("../webapi/element/svg/Symbol.zig"),
@@ -933,15 +934,27 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/element/svg/Desc.zig"),
     @import("../webapi/element/svg/Title.zig"),
     @import("../webapi/element/svg/Metadata.zig"),
-    // SVG linking + styling
-    @import("../webapi/element/svg/A.zig"),
-    @import("../webapi/element/svg/View.zig"),
     // SVG text
     @import("../webapi/element/svg/TextContent.zig"),
     @import("../webapi/element/svg/TextPositioning.zig"),
     @import("../webapi/element/svg/Text.zig"),
     @import("../webapi/element/svg/TSpan.zig"),
     @import("../webapi/element/svg/TextPath.zig"),
+    // SVG linking + styling
+    @import("../webapi/element/svg/A.zig"),
+    @import("../webapi/element/svg/View.zig"),
+    @import("../webapi/element/svg/SvgScript.zig"),
+    @import("../webapi/element/svg/SvgStyle.zig"),
+    // SVG gradients + patterns
+    @import("../webapi/element/svg/GradientElement.zig"),
+    @import("../webapi/element/svg/LinearGradient.zig"),
+    @import("../webapi/element/svg/RadialGradient.zig"),
+    @import("../webapi/element/svg/Stop.zig"),
+    @import("../webapi/element/svg/Pattern.zig"),
+    // SVG clip/mask/marker
+    @import("../webapi/element/svg/ClipPath.zig"),
+    @import("../webapi/element/svg/Mask.zig"),
+    @import("../webapi/element/svg/Marker.zig"),
     // SVG filter
     @import("../webapi/element/svg/Filter.zig"),
     // SVG filter effect elements
@@ -970,6 +983,13 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/element/svg/fe/SpotLight.zig"),
     @import("../webapi/element/svg/fe/Tile.zig"),
     @import("../webapi/element/svg/fe/Turbulence.zig"),
+    // SVG animation
+    @import("../webapi/element/svg/AnimationElement.zig"),
+    @import("../webapi/element/svg/Animate.zig"),
+    @import("../webapi/element/svg/AnimateSet.zig"),
+    @import("../webapi/element/svg/AnimateMotion.zig"),
+    @import("../webapi/element/svg/AnimateTransform.zig"),
+    @import("../webapi/element/svg/MPath.zig"),
     // SVG data types
     @import("../webapi/svg_types/SVGNumber.zig"),
     @import("../webapi/svg_types/SVGLength.zig"),

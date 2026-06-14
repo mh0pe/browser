@@ -1665,8 +1665,7 @@ pub fn getElementByIdFromNode(self: *Frame, node: *Node, id: []const u8) ?*Eleme
             }
             const parent = current._parent orelse {
                 if (current._type == .document) {
-                    const result = current._type.document.getElementById(id, self);
-                    return result;
+                    return current._type.document.getElementById(id, self);
                 }
                 if (IS_DEBUG) {
                     std.debug.assert(false);
@@ -2858,11 +2857,20 @@ pub fn createElementNS(self: *Frame, namespace: Element.Namespace, name: []const
                 .desc => self.createSvgElementT(Element.Svg.Desc, name, attribute_iterator, .{ ._proto = undefined }),
                 .title => self.createSvgElementT(Element.Svg.Title, name, attribute_iterator, .{ ._proto = undefined }),
                 .metadata => self.createSvgElementT(Element.Svg.Metadata, name, attribute_iterator, .{ ._proto = undefined }),
-                .svg_a => self.createSvgElementT(Element.Svg.A, name, attribute_iterator, .{ ._proto = undefined }),
-                .view => self.createSvgElementT(Element.Svg.View, name, attribute_iterator, .{ ._proto = undefined }),
                 .text => self.createSvgElementT(Element.Svg.Text, name, attribute_iterator, .{ ._proto = undefined }),
                 .tspan => self.createSvgElementT(Element.Svg.TSpan, name, attribute_iterator, .{ ._proto = undefined }),
                 .textpath => self.createSvgElementT(Element.Svg.TextPath, name, attribute_iterator, .{ ._proto = undefined }),
+                .svg_a => self.createSvgElementT(Element.Svg.A, name, attribute_iterator, .{ ._proto = undefined }),
+                .view => self.createSvgElementT(Element.Svg.View, name, attribute_iterator, .{ ._proto = undefined }),
+                .script => self.createSvgElementT(Element.Svg.SvgScript, name, attribute_iterator, .{ ._proto = undefined }),
+                .style => self.createSvgElementT(Element.Svg.SvgStyle, name, attribute_iterator, .{ ._proto = undefined }),
+                .lineargradient => self.createSvgElementT(Element.Svg.LinearGradient, name, attribute_iterator, .{ ._proto = undefined }),
+                .radialgradient => self.createSvgElementT(Element.Svg.RadialGradient, name, attribute_iterator, .{ ._proto = undefined }),
+                .stop => self.createSvgElementT(Element.Svg.Stop, name, attribute_iterator, .{ ._proto = undefined }),
+                .pattern => self.createSvgElementT(Element.Svg.Pattern, name, attribute_iterator, .{ ._proto = undefined }),
+                .clippath => self.createSvgElementT(Element.Svg.ClipPath, name, attribute_iterator, .{ ._proto = undefined }),
+                .mask => self.createSvgElementT(Element.Svg.Mask, name, attribute_iterator, .{ ._proto = undefined }),
+                .marker => self.createSvgElementT(Element.Svg.Marker, name, attribute_iterator, .{ ._proto = undefined }),
                 .filter => self.createSvgElementT(Element.Svg.Filter, name, attribute_iterator, .{ ._proto = undefined }),
                 .feblend => self.createSvgElementT(Element.Svg.FEBlend, name, attribute_iterator, .{ ._proto = undefined }),
                 .fecolormatrix => self.createSvgElementT(Element.Svg.FEColorMatrix, name, attribute_iterator, .{ ._proto = undefined }),
@@ -2889,6 +2897,11 @@ pub fn createElementNS(self: *Frame, namespace: Element.Namespace, name: []const
                 .fespotlight => self.createSvgElementT(Element.Svg.FESpotLight, name, attribute_iterator, .{ ._proto = undefined }),
                 .fetile => self.createSvgElementT(Element.Svg.FETile, name, attribute_iterator, .{ ._proto = undefined }),
                 .feturbulence => self.createSvgElementT(Element.Svg.FETurbulence, name, attribute_iterator, .{ ._proto = undefined }),
+                .animate => self.createSvgElementT(Element.Svg.Animate, name, attribute_iterator, .{ ._proto = undefined }),
+                .set => self.createSvgElementT(Element.Svg.AnimateSet, name, attribute_iterator, .{ ._proto = undefined }),
+                .animatemotion => self.createSvgElementT(Element.Svg.AnimateMotion, name, attribute_iterator, .{ ._proto = undefined }),
+                .animatetransform => self.createSvgElementT(Element.Svg.AnimateTransform, name, attribute_iterator, .{ ._proto = undefined }),
+                .mpath => self.createSvgElementT(Element.Svg.MPath, name, attribute_iterator, .{ ._proto = undefined }),
                 else => self.createSvgElementT(Element.Svg.Unknown, name, attribute_iterator, .{ ._proto = undefined, ._tag_name = tag_name }),
             };
         },
@@ -3402,8 +3415,7 @@ pub fn _insertNodeRelative(self: *Frame, comptime from_parser: bool, parent: *No
             // Invoke connectedCallback for custom elements during parsing
             // For main document parsing, we know nodes are connected (fast path)
             // For fragment parsing (innerHTML), we need to check connectivity
-            const connected = child.isConnected() or child.isInShadowTree();
-            if (connected) {
+            if (child.isConnected() or child.isInShadowTree()) {
                 if (el.getAttributeSafe(comptime .wrap("id"))) |id| {
                     try self.addElementId(parent, el, id);
                 }
