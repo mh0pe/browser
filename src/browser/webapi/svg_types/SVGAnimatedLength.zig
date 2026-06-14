@@ -16,29 +16,36 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-const js = @import("../../../js/js.zig");
-const Node = @import("../../Node.zig");
-const Element = @import("../../Element.zig");
-const Svg = @import("../Svg.zig");
+const SVGAnimatedLength = @This();
 
-// NOTE: This type is retained for backward compatibility but is not instantiated by the parser.
-const Generic = @This();
-_proto: *Svg,
-_tag: Element.Tag,
+const js = @import("../../js/js.zig");
+const Element = @import("../Element.zig");
+const String = @import("../../../string.zig").String;
+const SVGLength = @import("SVGLength.zig");
 
-pub fn asElement(self: *Generic) *Element {
-    return self._proto._proto;
+_base_val: SVGLength = .{ ._value = 0, ._unit_type = 1, ._element = null, ._attr_name = String.empty },
+
+pub fn init(element: *Element, attr_name: String) SVGAnimatedLength {
+    return .{ ._base_val = .{ ._value = 0, ._unit_type = 1, ._element = element, ._attr_name = attr_name } };
 }
-pub fn asNode(self: *Generic) *Node {
-    return self.asElement().asNode();
+
+pub fn getBaseVal(self: *SVGAnimatedLength) *SVGLength {
+    return &self._base_val;
+}
+
+pub fn getAnimVal(self: *SVGAnimatedLength) *SVGLength {
+    return &self._base_val;
 }
 
 pub const JsApi = struct {
-    pub const bridge = js.Bridge(Generic);
+    pub const bridge = js.Bridge(SVGAnimatedLength);
 
     pub const Meta = struct {
-        pub const name = "SVGGenericElement";
+        pub const name = "SVGAnimatedLength";
         pub const prototype_chain = bridge.prototypeChain();
         pub var class_id: bridge.ClassId = undefined;
     };
+
+    pub const baseVal = bridge.accessor(SVGAnimatedLength.getBaseVal, null, .{});
+    pub const animVal = bridge.accessor(SVGAnimatedLength.getAnimVal, null, .{});
 };

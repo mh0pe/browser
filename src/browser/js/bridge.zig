@@ -662,6 +662,7 @@ fn PrototypeType(comptime T: type) ?type {
 }
 
 fn flattenTypes(comptime Types: []const type) [countFlattenedTypes(Types)]type {
+    @setEvalBranchQuota(10000);
     var index: usize = 0;
     var flat: [countFlattenedTypes(Types)]type = undefined;
     for (Types) |T| {
@@ -679,6 +680,7 @@ fn flattenTypes(comptime Types: []const type) [countFlattenedTypes(Types)]type {
 }
 
 fn countFlattenedTypes(comptime Types: []const type) usize {
+    @setEvalBranchQuota(10000);
     var c: usize = 0;
     for (Types) |T| {
         c += if (@hasDecl(T, "registerTypes")) T.registerTypes().len else 1;
@@ -907,6 +909,35 @@ pub const PageJsApis = flattenTypes(&.{
     @import("../webapi/element/html/ValidityState.zig"),
     @import("../webapi/element/Svg.zig"),
     @import("../webapi/element/svg/Generic.zig"),
+    @import("../webapi/element/svg/Unknown.zig"),
+    @import("../webapi/element/svg/GraphicsElement.zig"),
+    @import("../webapi/element/svg/GeometryElement.zig"),
+    @import("../webapi/element/svg/SvgSvg.zig"),
+    // SVG data types
+    @import("../webapi/svg_types/SVGNumber.zig"),
+    @import("../webapi/svg_types/SVGLength.zig"),
+    @import("../webapi/svg_types/SVGAngle.zig"),
+    @import("../webapi/svg_types/SVGTransform.zig"),
+    @import("../webapi/svg_types/SVGPreserveAspectRatio.zig"),
+    @import("../webapi/svg_types/SVGAnimatedString.zig"),
+    @import("../webapi/svg_types/SVGAnimatedNumber.zig"),
+    @import("../webapi/svg_types/SVGAnimatedLength.zig"),
+    @import("../webapi/svg_types/SVGAnimatedBoolean.zig"),
+    @import("../webapi/svg_types/SVGAnimatedEnumeration.zig"),
+    @import("../webapi/svg_types/SVGAnimatedInteger.zig"),
+    @import("../webapi/svg_types/SVGAnimatedRect.zig"),
+    @import("../webapi/svg_types/SVGAnimatedAngle.zig"),
+    @import("../webapi/svg_types/SVGAnimatedNumberList.zig"),
+    @import("../webapi/svg_types/SVGAnimatedLengthList.zig"),
+    @import("../webapi/svg_types/SVGAnimatedTransformList.zig"),
+    @import("../webapi/svg_types/SVGAnimatedPreserveAspectRatio.zig"),
+    @import("../webapi/svg_types/SVGNumberList.zig"),
+    @import("../webapi/svg_types/SVGLengthList.zig"),
+    @import("../webapi/svg_types/SVGStringList.zig"),
+    @import("../webapi/svg_types/SVGTransformList.zig"),
+    @import("../webapi/svg_types/SVGPointList.zig"),
+    // Geometry
+    @import("../webapi/DOMPoint.zig"),
     @import("../webapi/encoding/TextDecoder.zig"),
     @import("../webapi/encoding/TextEncoder.zig"),
     @import("../webapi/encoding/TextEncoderStream.zig"),

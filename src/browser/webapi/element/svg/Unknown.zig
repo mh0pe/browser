@@ -16,28 +16,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+const String = @import("../../../../string.zig").String;
+
 const js = @import("../../../js/js.zig");
 const Node = @import("../../Node.zig");
 const Element = @import("../../Element.zig");
 const Svg = @import("../Svg.zig");
 
-// NOTE: This type is retained for backward compatibility but is not instantiated by the parser.
-const Generic = @This();
+const Unknown = @This();
 _proto: *Svg,
-_tag: Element.Tag,
+_tag_name: String,
 
-pub fn asElement(self: *Generic) *Element {
+pub fn asElement(self: *Unknown) *Element {
     return self._proto._proto;
 }
-pub fn asNode(self: *Generic) *Node {
+
+pub fn asNode(self: *Unknown) *Node {
     return self.asElement().asNode();
 }
 
 pub const JsApi = struct {
-    pub const bridge = js.Bridge(Generic);
+    pub const bridge = js.Bridge(Unknown);
 
     pub const Meta = struct {
-        pub const name = "SVGGenericElement";
+        pub const name = "SVGUnknownElement";
         pub const prototype_chain = bridge.prototypeChain();
         pub var class_id: bridge.ClassId = undefined;
     };

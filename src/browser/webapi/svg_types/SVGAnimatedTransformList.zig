@@ -16,29 +16,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-const js = @import("../../../js/js.zig");
-const Node = @import("../../Node.zig");
-const Element = @import("../../Element.zig");
-const Svg = @import("../Svg.zig");
+const SVGAnimatedTransformList = @This();
 
-// NOTE: This type is retained for backward compatibility but is not instantiated by the parser.
-const Generic = @This();
-_proto: *Svg,
-_tag: Element.Tag,
+const js = @import("../../js/js.zig");
+const Frame = @import("../../Frame.zig");
+const Element = @import("../Element.zig");
+const String = @import("../../../string.zig").String;
+const SVGTransformList = @import("SVGTransformList.zig");
 
-pub fn asElement(self: *Generic) *Element {
-    return self._proto._proto;
+_element: *Element,
+_attr_name: String,
+
+pub fn getBaseVal(_: *const SVGAnimatedTransformList, frame: *Frame) !*SVGTransformList {
+    return frame._factory.create(SVGTransformList{});
 }
-pub fn asNode(self: *Generic) *Node {
-    return self.asElement().asNode();
+
+pub fn getAnimVal(self: *const SVGAnimatedTransformList, frame: *Frame) !*SVGTransformList {
+    return self.getBaseVal(frame);
 }
 
 pub const JsApi = struct {
-    pub const bridge = js.Bridge(Generic);
+    pub const bridge = js.Bridge(SVGAnimatedTransformList);
 
     pub const Meta = struct {
-        pub const name = "SVGGenericElement";
+        pub const name = "SVGAnimatedTransformList";
         pub const prototype_chain = bridge.prototypeChain();
         pub var class_id: bridge.ClassId = undefined;
     };
+
+    pub const baseVal = bridge.accessor(SVGAnimatedTransformList.getBaseVal, null, .{});
+    pub const animVal = bridge.accessor(SVGAnimatedTransformList.getAnimVal, null, .{});
 };

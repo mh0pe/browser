@@ -1665,7 +1665,8 @@ pub fn getElementByIdFromNode(self: *Frame, node: *Node, id: []const u8) ?*Eleme
             }
             const parent = current._parent orelse {
                 if (current._type == .document) {
-                    return current._type.document.getElementById(id, self);
+                    const result = current._type.document.getElementById(id, self);
+                    return result;
                 }
                 if (IS_DEBUG) {
                     std.debug.assert(false);
@@ -2830,18 +2831,18 @@ pub fn createElementNS(self: *Frame, namespace: Element.Namespace, name: []const
         },
         .svg => {
             const tag_name = try String.init(self.arena, name, .{});
-            if (std.ascii.eqlIgnoreCase(name, "svg")) {
-                return self.createSvgElementT(Element.Svg, name, attribute_iterator, .{
-                    ._proto = undefined,
-                    ._type = .svg,
-                    ._tag_name = tag_name,
-                });
-            }
-
-            // Other SVG elements (rect, circle, text, g, etc.)
             const lower = std.ascii.lowerString(&self.buf, name);
-            const tag = std.meta.stringToEnum(Element.Tag, lower) orelse .unknown;
-            return self.createSvgElementT(Element.Svg.Generic, name, attribute_iterator, .{ ._proto = undefined, ._tag = tag });
+            const tag = blk: {
+                const t = std.meta.stringToEnum(Element.Tag, lower) orelse .unknown;
+                // "a" maps to .anchor in the Tag enum (HTML), but in SVG context it's SVGAElement
+                if (t == .unknown and std.mem.eql(u8, lower, "a")) break :blk Element.Tag.svg_a;
+                break :blk t;
+            };
+
+            return switch (tag) {
+                .svg => self.createSvgElementT(Element.Svg.SvgSvg, name, attribute_iterator, .{ ._proto = undefined }),
+                else => self.createSvgElementT(Element.Svg.Unknown, name, attribute_iterator, .{ ._proto = undefined, ._tag_name = tag_name }),
+            };
         },
         else => {
             const tag_name = try String.init(self.arena, name, .{});
@@ -3353,7 +3354,8 @@ pub fn _insertNodeRelative(self: *Frame, comptime from_parser: bool, parent: *No
             // Invoke connectedCallback for custom elements during parsing
             // For main document parsing, we know nodes are connected (fast path)
             // For fragment parsing (innerHTML), we need to check connectivity
-            if (child.isConnected() or child.isInShadowTree()) {
+            const connected = child.isConnected() or child.isInShadowTree();
+            if (connected) {
                 if (el.getAttributeSafe(comptime .wrap("id"))) |id| {
                     try self.addElementId(parent, el, id);
                 }

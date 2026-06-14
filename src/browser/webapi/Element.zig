@@ -1720,6 +1720,7 @@ pub fn getTag(self: *const Element) Tag {
         .svg => |se| switch (se._type) {
             .svg => .svg,
             .generic => |g| g._tag,
+            .unknown => Tag.parseForMatch(se._tag_name.str()) orelse .unknown,
         },
     };
 }
@@ -1824,6 +1825,7 @@ pub const Tag = enum {
     summary,
     sup,
     svg,
+    svg_a,
     table,
     time,
     tbody,

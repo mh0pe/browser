@@ -20,25 +20,50 @@ const js = @import("../../../js/js.zig");
 const Node = @import("../../Node.zig");
 const Element = @import("../../Element.zig");
 const Svg = @import("../Svg.zig");
+const DOMRect = @import("../../DOMRect.zig");
+const DOMMatrix = @import("../../DOMMatrix.zig");
+const RO = @import("../../DOMMatrixReadOnly.zig");
+const Frame = @import("../../../Frame.zig");
 
-// NOTE: This type is retained for backward compatibility but is not instantiated by the parser.
-const Generic = @This();
+const GraphicsElement = @This();
 _proto: *Svg,
-_tag: Element.Tag,
 
-pub fn asElement(self: *Generic) *Element {
+pub fn asElement(self: *GraphicsElement) *Element {
     return self._proto._proto;
 }
-pub fn asNode(self: *Generic) *Node {
+
+pub fn asConstElement(self: *const GraphicsElement) *const Element {
+    return self._proto._proto;
+}
+
+pub fn asNode(self: *GraphicsElement) *Node {
     return self.asElement().asNode();
 }
 
+/// getBBox stub - returns zero rect, overridden by specific elements
+pub fn getBBox(self: *GraphicsElement, frame: *Frame) !*DOMRect {
+    _ = self;
+    return DOMRect.init(0, 0, 0, 0, frame);
+}
+
+pub fn getCTM(_: *GraphicsElement, frame: *Frame) !*DOMMatrix {
+    return DOMMatrix.create(RO.identity(), true, frame._page);
+}
+
+pub fn getScreenCTM(_: *GraphicsElement, frame: *Frame) !*DOMMatrix {
+    return DOMMatrix.create(RO.identity(), true, frame._page);
+}
+
 pub const JsApi = struct {
-    pub const bridge = js.Bridge(Generic);
+    pub const bridge = js.Bridge(GraphicsElement);
 
     pub const Meta = struct {
-        pub const name = "SVGGenericElement";
+        pub const name = "SVGGraphicsElement";
         pub const prototype_chain = bridge.prototypeChain();
         pub var class_id: bridge.ClassId = undefined;
     };
+
+    pub const getBBox = bridge.function(GraphicsElement.getBBox, .{});
+    pub const getCTM = bridge.function(GraphicsElement.getCTM, .{});
+    pub const getScreenCTM = bridge.function(GraphicsElement.getScreenCTM, .{});
 };
