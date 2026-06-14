@@ -1721,6 +1721,13 @@ pub fn getTag(self: *const Element) Tag {
             .svg => .svg,
             .generic => |g| g._tag,
             .unknown => Tag.parseForMatch(se._tag_name.str()) orelse .unknown,
+            .rect => .rect,
+            .circle => .circle,
+            .ellipse => .ellipse,
+            .line => .line,
+            .polyline => .polyline,
+            .polygon => .polygon,
+            .path => .path,
         },
     };
 }

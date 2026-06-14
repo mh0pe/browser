@@ -27,6 +27,13 @@ pub const Unknown = @import("svg/Unknown.zig");
 pub const GraphicsElement = @import("svg/GraphicsElement.zig");
 pub const GeometryElement = @import("svg/GeometryElement.zig");
 pub const SvgSvg = @import("svg/SvgSvg.zig");
+pub const Rect = @import("svg/Rect.zig");
+pub const Circle = @import("svg/Circle.zig");
+pub const Ellipse = @import("svg/Ellipse.zig");
+pub const Line = @import("svg/Line.zig");
+pub const Polyline = @import("svg/Polyline.zig");
+pub const Polygon = @import("svg/Polygon.zig");
+pub const Path = @import("svg/Path.zig");
 
 const String = lp.String;
 
@@ -39,6 +46,13 @@ pub const Type = union(enum) {
     svg: *SvgSvg,
     generic: *Generic,
     unknown: *Unknown,
+    rect: *Rect,
+    circle: *Circle,
+    ellipse: *Ellipse,
+    line: *Line,
+    polyline: *Polyline,
+    polygon: *Polygon,
+    path: *Path,
 };
 
 pub fn is(self: *Svg, comptime T: type) ?*T {
