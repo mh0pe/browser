@@ -17,35 +17,47 @@ const Element = @import("../Element.zig");
 
 const PointList = @This();
 
+_frame: *Frame,
 _element: *Element,
 _read_only: bool,
+_synced: bool = false,
+_snapshot: std.ArrayList(u8) = .empty,
 _items: std.ArrayList(*DOMPoint) = .empty,
 _retired: std.ArrayList(*DOMPoint) = .empty,
-_snapshot: ?[]const u8 = null,
 
-pub fn create(element: *Element, read_only: bool, frame: *Frame) !*PointList {
-    const self = try frame._factory.create(PointList{
-        ._element = element,
-        ._read_only = read_only,
-    });
-    try frame.registerSvgCollectionCleanup(.{
-        .context = self,
-        .callback = PointList.cleanup,
-    });
-    return self;
+pub const Kind = enum { base, animated };
+
+pub const Key = struct {
+    element: *Element,
+    kind: Kind,
+};
+
+pub const Lookup = std.AutoHashMapUnmanaged(Key, *PointList);
+
+pub fn getOrCreate(element: *Element, kind: Kind, frame: *Frame) !*PointList {
+    const key: Key = .{
+        .element = element,
+        .kind = kind,
+    };
+    const gop = try frame._svg_point_lists.getOrPut(frame.arena, key);
+    if (!gop.found_existing) {
+        errdefer _ = frame._svg_point_lists.remove(key);
+        gop.value_ptr.* = try frame._factory.create(PointList{
+            ._frame = frame,
+            ._element = element,
+            ._read_only = kind == .animated,
+        });
+    }
+    return gop.value_ptr.*;
 }
 
-fn cleanup(context: *anyopaque, page: *Page) void {
-    const self: *PointList = @ptrCast(@alignCast(context));
+pub fn deinit(self: *PointList, page: *Page) void {
     for (self._items.items) |point| {
         point._proto.detach(self);
         point._proto.releaseRef(page);
     }
-    for (self._retired.items) |point| {
-        point._proto.releaseRef(page);
-    }
     self._items.clearRetainingCapacity();
-    self._retired.clearRetainingCapacity();
+    self.releaseRetired(page);
 }
 
 pub fn getLength(self: *PointList, frame: *Frame) !u32 {
@@ -174,9 +186,9 @@ fn mutatePoint(
     point: *DOMPointReadOnly,
     coordinate: DOMPointReadOnly.Coordinate,
     value: f64,
-    frame: *Frame,
 ) anyerror!void {
     const self: *PointList = @ptrCast(@alignCast(context));
+    const frame = self._frame;
     try self.sync(frame);
 
     // An external attribute mutation detaches the old item during sync. The
@@ -201,27 +213,43 @@ fn mutatePoint(
 }
 
 fn sync(self: *PointList, frame: *Frame) !void {
+    self.releaseRetired(frame._page);
+
     const raw = self._element.getAttributeSafe(comptime .wrap("points")) orelse "";
-    if (self._snapshot) |snapshot| {
-        if (std.mem.eql(u8, snapshot, raw)) return;
+    if (self._synced and std.mem.eql(u8, self._snapshot.items, raw)) {
+        return;
     }
 
-    const snapshot = try frame.arena.dupe(u8, raw);
     var parsed = parse(raw, frame) catch |err| switch (err) {
         error.SyntaxError => std.ArrayList(*DOMPoint).empty,
         else => return err,
     };
     errdefer for (parsed.items) |point| point._proto.releaseRef(frame._page);
 
-    try self._items.ensureTotalCapacity(frame.arena, parsed.items.len);
+    try self._snapshot.ensureTotalCapacity(frame.arena, raw.len);
     try self._retired.ensureUnusedCapacity(frame.arena, self._items.items.len);
+    try self._items.ensureTotalCapacity(frame.arena, parsed.items.len);
+
+    self._synced = false;
+    self._snapshot.clearRetainingCapacity();
+    self._snapshot.appendSliceAssumeCapacity(raw);
     self.retireAllAssumeCapacity();
     for (parsed.items) |point| {
         self._items.appendAssumeCapacity(point);
         self.attach(point);
     }
     parsed.clearRetainingCapacity();
-    self._snapshot = snapshot;
+    self._synced = true;
+}
+
+// A retired item must outlive the operation that retired it: removeItem's
+// return value has no JS wrapper until the bridge wraps it after we return.
+// By the next operation, anything still reachable holds its own ref.
+fn releaseRetired(self: *PointList, page: *Page) void {
+    for (self._retired.items) |point| {
+        point._proto.releaseRef(page);
+    }
+    self._retired.clearRetainingCapacity();
 }
 
 fn parse(raw: []const u8, frame: *Frame) !std.ArrayList(*DOMPoint) {
@@ -278,9 +306,12 @@ fn setAttributeWithOverride(
 }
 
 fn commitAttribute(self: *PointList, serialized: []const u8, frame: *Frame) !void {
-    const snapshot = try frame.arena.dupe(u8, serialized);
+    try self._snapshot.ensureTotalCapacity(frame.arena, serialized.len);
     try self._element.setAttributeSafe(comptime .wrap("points"), .wrap(serialized), frame);
-    self._snapshot = snapshot;
+    self._synced = false;
+    self._snapshot.clearRetainingCapacity();
+    self._snapshot.appendSliceAssumeCapacity(serialized);
+    self._synced = true;
 }
 
 const NumberScanner = struct {

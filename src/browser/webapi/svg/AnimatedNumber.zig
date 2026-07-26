@@ -11,57 +11,75 @@ const lp = @import("lightpanda");
 const js = @import("../../js/js.zig");
 const Frame = @import("../../Frame.zig");
 const Element = @import("../Element.zig");
-const Number = @import("Number.zig");
 
 const AnimatedNumber = @This();
 
-_base_val: *Number,
-_anim_val: *Number,
+_element: *Element,
+_attr_name: lp.String,
+_allow_percentage: bool,
 
-pub const Lookup = std.AutoHashMapUnmanaged(*Element, *AnimatedNumber);
+pub const Kind = enum {
+    path_length,
+    offset,
 
-pub fn getOrCreate(element: *Element, frame: *Frame) !*AnimatedNumber {
-    const gop = try frame._svg_animated_numbers.getOrPut(frame.arena, element);
+    fn attributeName(self: Kind) lp.String {
+        return switch (self) {
+            .path_length => comptime .wrap("pathLength"),
+            .offset => comptime .wrap("offset"),
+        };
+    }
+
+    fn allowsPercentage(self: Kind) bool {
+        return switch (self) {
+            .path_length => false,
+            .offset => true,
+        };
+    }
+};
+
+pub const Key = struct {
+    element: *Element,
+    kind: Kind,
+};
+
+pub const Lookup = std.AutoHashMapUnmanaged(Key, *AnimatedNumber);
+
+pub fn getOrCreate(element: *Element, kind: Kind, frame: *Frame) !*AnimatedNumber {
+    const key: Key = .{ .element = element, .kind = kind };
+    const gop = try frame._svg_animated_numbers.getOrPut(frame.arena, key);
     if (!gop.found_existing) {
-        errdefer _ = frame._svg_animated_numbers.remove(element);
-        gop.value_ptr.* = try create(element, comptime .wrap("pathLength"), frame);
+        errdefer _ = frame._svg_animated_numbers.remove(key);
+        gop.value_ptr.* = try frame._factory.create(AnimatedNumber{
+            ._element = element,
+            ._attr_name = kind.attributeName(),
+            ._allow_percentage = kind.allowsPercentage(),
+        });
     }
     return gop.value_ptr.*;
 }
 
-pub fn getOrCreatePercentage(element: *Element, frame: *Frame) !*AnimatedNumber {
-    const gop = try frame._svg_animated_numbers.getOrPut(frame.arena, element);
-    if (!gop.found_existing) {
-        errdefer _ = frame._svg_animated_numbers.remove(element);
-        gop.value_ptr.* = try createPercentage(element, comptime .wrap("offset"), frame);
-    }
-    return gop.value_ptr.*;
+pub fn getBaseVal(self: *const AnimatedNumber) f32 {
+    return self.currentValue();
 }
 
-pub fn create(element: *Element, attr_name: lp.String, frame: *Frame) !*AnimatedNumber {
-    const base_val = try Number.reflected(element, attr_name, false, frame);
-    const anim_val = try Number.reflected(element, attr_name, true, frame);
-    return frame._factory.create(AnimatedNumber{
-        ._base_val = base_val,
-        ._anim_val = anim_val,
-    });
+pub fn setBaseVal(self: *AnimatedNumber, value: f32, frame: *Frame) !void {
+    if (!std.math.isFinite(value)) return error.TypeError;
+    const serialized = try std.fmt.allocPrint(frame.call_arena, "{d}", .{value});
+    try self._element.setAttributeSafe(self._attr_name, lp.String.wrap(serialized), frame);
 }
 
-pub fn createPercentage(element: *Element, attr_name: lp.String, frame: *Frame) !*AnimatedNumber {
-    const base_val = try Number.reflectedPercentage(element, attr_name, false, frame);
-    const anim_val = try Number.reflectedPercentage(element, attr_name, true, frame);
-    return frame._factory.create(AnimatedNumber{
-        ._base_val = base_val,
-        ._anim_val = anim_val,
-    });
+pub fn getAnimVal(self: *const AnimatedNumber) f32 {
+    return self.currentValue();
 }
 
-pub fn getBaseVal(self: *AnimatedNumber) *Number {
-    return self._base_val;
-}
-
-pub fn getAnimVal(self: *AnimatedNumber) *Number {
-    return self._anim_val;
+fn currentValue(self: *const AnimatedNumber) f32 {
+    const raw = self._element.getAttributeSafe(self._attr_name) orelse return 0;
+    const trimmed = std.mem.trim(u8, raw, " \t\r\n\x0c");
+    const value = if (self._allow_percentage and std.mem.endsWith(u8, trimmed, "%"))
+        (std.fmt.parseFloat(f32, trimmed[0 .. trimmed.len - 1]) catch return 0) / 100
+    else
+        std.fmt.parseFloat(f32, trimmed) catch return 0;
+    return if (std.math.isFinite(value)) value else 0;
 }
 
 pub const JsApi = struct {
@@ -73,6 +91,6 @@ pub const JsApi = struct {
         pub var class_id: bridge.ClassId = undefined;
     };
 
-    pub const baseVal = bridge.accessor(AnimatedNumber.getBaseVal, null, .{});
+    pub const baseVal = bridge.accessor(AnimatedNumber.getBaseVal, AnimatedNumber.setBaseVal, .{});
     pub const animVal = bridge.accessor(AnimatedNumber.getAnimVal, null, .{});
 };

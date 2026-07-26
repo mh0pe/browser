@@ -10,6 +10,7 @@ const lp = @import("lightpanda");
 
 const js = @import("../../js/js.zig");
 const Frame = @import("../../Frame.zig");
+const Page = @import("../../Page.zig");
 const Element = @import("../Element.zig");
 const TransformList = @import("TransformList.zig");
 
@@ -61,6 +62,11 @@ pub fn createForAttribute(element: *Element, attr_name: lp.String, frame: *Frame
         ._base_val = base_val,
         ._anim_val = anim_val,
     });
+}
+
+pub fn deinit(self: *AnimatedTransformList, page: *Page) void {
+    self._base_val.deinit(page);
+    self._anim_val.deinit(page);
 }
 
 pub fn getBaseVal(self: *AnimatedTransformList) *TransformList {

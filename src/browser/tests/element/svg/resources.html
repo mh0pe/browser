@@ -57,6 +57,15 @@
   testing.expectEqual(1, linear.gradientTransform.baseVal.numberOfItems);
   testing.expectEqual(4, linear.gradientTransform.baseVal.getItem(0).matrix.e);
   testing.expectEqual(5, linear.gradientTransform.baseVal.getItem(0).matrix.f);
+  testing.expectEqual(true, linear.gradientTransform === linear.gradientTransform);
+  const gradientMatrix = linear.gradientTransform.baseVal.getItem(0).matrix;
+  gradientMatrix.e = 12;
+  testing.expectEqual(true, linear.getAttribute('gradientTransform').startsWith('matrix('));
+  testing.expectEqual('translate(90)', linear.getAttribute('transform'));
+  testing.expectEqual(12, linear.gradientTransform.animVal.getItem(0).matrix.e);
+  testing.expectError('NoModificationAllowedError', () => {
+    linear.gradientTransform.animVal.getItem(0).matrix.e = 99;
+  });
 
   testing.expectEqual(2, linear.x1.baseVal.unitType);
   testing.expectEqual(true, linear.x2 === linear.x2);
@@ -66,6 +75,8 @@
   testing.expectEqual('80%', linear.getAttribute('x2'));
   testing.expectEqual(80, linear.x2.animVal.valueInSpecifiedUnits);
   testing.expectError('NoModificationAllowedError', () => { linear.x2.animVal.value = 1; });
+  linear.setAttribute('x2', 'invalid');
+  testing.expectEqual('100%', linear.x2.baseVal.valueAsString);
 }
 </script>
 
@@ -84,6 +95,8 @@
   testing.expectEqual('60%', radial.fx.baseVal.valueAsString);
   testing.expectEqual('50%', radial.r.baseVal.valueAsString);
   testing.expectEqual('0%', radial.fr.baseVal.valueAsString);
+  radial.setAttribute('r', 'invalid');
+  testing.expectEqual('50%', radial.r.baseVal.valueAsString);
 }
 </script>
 
@@ -99,6 +112,8 @@
   testing.expectEqual('-10%', mask.y.baseVal.valueAsString);
   testing.expectEqual('120%', mask.width.baseVal.valueAsString);
   testing.expectEqual('120%', mask.height.baseVal.valueAsString);
+  mask.setAttribute('width', 'invalid');
+  testing.expectEqual('120%', mask.width.baseVal.valueAsString);
   testing.expectEqual(2, mask.maskUnits.baseVal);
   testing.expectEqual(1, mask.maskContentUnits.baseVal);
 
@@ -106,6 +121,8 @@
   testing.expectEqual(true, marker.markerUnits === marker.markerUnits);
   testing.expectEqual(3, marker.markerWidth.baseVal.value);
   testing.expectEqual(3, marker.markerHeight.baseVal.value);
+  marker.setAttribute('markerWidth', 'invalid');
+  testing.expectEqual(3, marker.markerWidth.baseVal.value);
   testing.expectEqual(2, marker.markerUnits.baseVal);
 
   const pattern = $('#pattern');
@@ -114,14 +131,22 @@
   testing.expectEqual(1, pattern.patternContentUnits.baseVal);
   testing.expectEqual(7, pattern.patternTransform.baseVal.getItem(0).matrix.e);
   testing.expectEqual(8, pattern.patternTransform.baseVal.getItem(0).matrix.f);
+  const patternMatrix = pattern.patternTransform.baseVal.getItem(0).matrix;
+  patternMatrix.f = 11;
+  testing.expectEqual(true, pattern.getAttribute('patternTransform').startsWith('matrix('));
+  testing.expectEqual(11, pattern.patternTransform.animVal.getItem(0).matrix.f);
   testing.expectEqual('#tile', pattern.href.baseVal);
 
   const stop = $('#stop');
   testing.expectEqual(true, stop.offset === stop.offset);
-  testing.expectEqual(0.25, stop.offset.baseVal.value);
-  stop.offset.baseVal.value = 0.5;
+  testing.expectEqual('number', typeof stop.offset.baseVal);
+  testing.expectEqual(0.25, stop.offset.baseVal);
+  stop.offset.baseVal = 0.5;
   testing.expectEqual('0.5', stop.getAttribute('offset'));
-  testing.expectEqual(0.5, stop.offset.animVal.value);
-  testing.expectError('NoModificationAllowedError', () => { stop.offset.animVal.value = 1; });
+  testing.expectEqual(0.5, stop.offset.animVal);
+  testing.expectEqual(false, Reflect.set(stop.offset, 'animVal', 1));
+  testing.expectEqual(0.5, stop.offset.animVal);
+  stop.setAttribute('offset', 'invalid');
+  testing.expectEqual(0, stop.offset.baseVal);
 }
 </script>

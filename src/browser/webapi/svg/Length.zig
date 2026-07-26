@@ -182,8 +182,8 @@ fn syncFromAttribute(self: *Length) void {
         return;
     };
     const parsed = parse(raw) catch {
-        self._value = 0;
-        self._unit = .unknown;
+        self._value = self._default_value;
+        self._unit = self._default_unit;
         return;
     };
     self._value = parsed.value;

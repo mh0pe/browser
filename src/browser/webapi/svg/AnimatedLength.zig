@@ -34,6 +34,8 @@ pub const Kind = enum {
     y,
     width,
     height,
+    svg_width,
+    svg_height,
     cx,
     cy,
     r,
@@ -72,8 +74,8 @@ pub const Kind = enum {
         return switch (self) {
             .x, .mask_x, .pattern_x => comptime .wrap("x"),
             .y, .mask_y, .pattern_y => comptime .wrap("y"),
-            .width, .mask_width, .pattern_width => comptime .wrap("width"),
-            .height, .mask_height, .pattern_height => comptime .wrap("height"),
+            .width, .svg_width, .mask_width, .pattern_width => comptime .wrap("width"),
+            .height, .svg_height, .mask_height, .pattern_height => comptime .wrap("height"),
             .cx, .radial_gradient_cx => comptime .wrap("cx"),
             .cy, .radial_gradient_cy => comptime .wrap("cy"),
             .r, .radial_gradient_r => comptime .wrap("r"),
@@ -99,6 +101,7 @@ pub const Kind = enum {
         return switch (self) {
             .x,
             .width,
+            .svg_width,
             .cx,
             .rx,
             .x1,
@@ -117,6 +120,7 @@ pub const Kind = enum {
             => .horizontal,
             .y,
             .height,
+            .svg_height,
             .cy,
             .ry,
             .y1,
@@ -138,6 +142,7 @@ pub const Kind = enum {
 
     fn defaultValue(self: Kind) f64 {
         return switch (self) {
+            .svg_width, .svg_height => 100,
             .linear_gradient_x2 => 100,
             .radial_gradient_cx,
             .radial_gradient_cy,
@@ -154,6 +159,8 @@ pub const Kind = enum {
 
     fn defaultUnit(self: Kind) Length.Unit {
         return switch (self) {
+            .svg_width,
+            .svg_height,
             .linear_gradient_x1,
             .linear_gradient_y1,
             .linear_gradient_x2,

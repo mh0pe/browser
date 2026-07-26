@@ -84,7 +84,7 @@ pub const JsApi = struct {
 };
 
 pub fn getPathLength(self: *Geometry, frame: *Frame) !*AnimatedNumber {
-    return AnimatedNumber.getOrCreate(self.asElement(), frame);
+    return AnimatedNumber.getOrCreate(self.asElement(), .path_length, frame);
 }
 
 pub fn getTotalLength(self: *Geometry, frame: *Frame) !f64 {

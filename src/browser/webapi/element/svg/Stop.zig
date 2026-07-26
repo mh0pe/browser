@@ -19,7 +19,7 @@ pub fn asNode(self: *Stop) *Node {
 }
 
 fn getOffset(self: *Stop, frame: *Frame) !*AnimatedNumber {
-    return AnimatedNumber.getOrCreatePercentage(self.asElement(), frame);
+    return AnimatedNumber.getOrCreate(self.asElement(), .offset, frame);
 }
 
 pub const JsApi = struct {

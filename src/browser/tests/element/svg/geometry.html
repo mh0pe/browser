@@ -38,12 +38,20 @@
   const pathLength = rect.pathLength;
   testing.expectEqual(true, pathLength instanceof SVGAnimatedNumber);
   testing.expectEqual(true, pathLength === rect.pathLength);
-  testing.expectEqual(false, pathLength.baseVal === pathLength.animVal);
-  testing.expectEqual(0, pathLength.baseVal.value);
-  pathLength.baseVal.value = 75;
+  testing.expectEqual('number', typeof pathLength.baseVal);
+  testing.expectEqual(0, pathLength.baseVal);
+  pathLength.baseVal = 75;
   testing.expectEqual('75', rect.getAttribute('pathLength'));
-  testing.expectEqual(75, pathLength.animVal.value);
-  testing.expectError('NoModificationAllowedError', () => { pathLength.animVal.value = 4; });
+  testing.expectEqual(75, pathLength.animVal);
+  testing.expectError('TypeError', () => { pathLength.baseVal = 'invalid'; });
+  testing.expectError('TypeError', () => { pathLength.baseVal = NaN; });
+  testing.expectError('TypeError', () => { pathLength.baseVal = Infinity; });
+  testing.expectEqual(75, pathLength.baseVal);
+  testing.expectEqual('75', rect.getAttribute('pathLength'));
+  testing.expectEqual(false, Reflect.set(pathLength, 'animVal', 4));
+  testing.expectEqual(75, pathLength.animVal);
+  rect.setAttribute('pathLength', 'invalid');
+  testing.expectEqual(0, pathLength.baseVal);
 }
 </script>
 

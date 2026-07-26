@@ -17,39 +17,35 @@ const Transform = @import("Transform.zig");
 
 const TransformList = @This();
 
-_element: *Element,
+_frame: *Frame,
 _attr_name: lp.String,
 _read_only: bool,
+_element: *Element,
+_synced: bool = false,
+_snapshot: std.ArrayList(u8) = .empty,
 _items: std.ArrayList(*Transform) = .empty,
 _retired: std.ArrayList(*Transform) = .empty,
-_snapshot: ?[]const u8 = null,
 
 pub fn create(element: *Element, read_only: bool, frame: *Frame) !*TransformList {
     return createForAttribute(element, comptime .wrap("transform"), read_only, frame);
 }
 
 pub fn createForAttribute(element: *Element, attr_name: lp.String, read_only: bool, frame: *Frame) !*TransformList {
-    const self = try frame._factory.create(TransformList{
+    return frame._factory.create(TransformList{
+        ._frame = frame,
         ._element = element,
         ._attr_name = attr_name,
         ._read_only = read_only,
     });
-    try frame.registerSvgCollectionCleanup(.{
-        .context = self,
-        .callback = TransformList.cleanup,
-    });
-    return self;
 }
 
-fn cleanup(context: *anyopaque, page: *Page) void {
-    const self: *TransformList = @ptrCast(@alignCast(context));
+pub fn deinit(self: *TransformList, page: *Page) void {
     for (self._items.items) |transform| {
         transform.detach(self);
         transform.releaseRef(page);
     }
-    for (self._retired.items) |transform| transform.releaseRef(page);
     self._items.clearRetainingCapacity();
-    self._retired.clearRetainingCapacity();
+    self.releaseRetired(page);
 }
 
 pub fn getLength(self: *TransformList, frame: *Frame) !u32 {
@@ -153,21 +149,28 @@ pub fn consolidate(self: *TransformList, frame: *Frame) !?*Transform {
     if (self._items.items.len == 0) return null;
 
     var matrix = DOMMatrixReadOnly.identity();
-    for (self._items.items) |item| matrix = DOMMatrixReadOnly.multiplyMatrix(matrix, item.getState().matrix);
+    var is_2d = true;
+    for (self._items.items) |item| {
+        const state = item.getState();
+        matrix = DOMMatrixReadOnly.multiplyMatrix(matrix, state.matrix);
+        is_2d = is_2d and state.is_2d;
+    }
     for (matrix) |value| if (!std.math.isFinite(value)) return error.TypeError;
-    var values: [16]f64 = undefined;
-    values[0] = matrix[0];
-    values[1] = matrix[1];
-    values[2] = matrix[4];
-    values[3] = matrix[5];
-    values[4] = matrix[12];
-    values[5] = matrix[13];
+    var values: [16]f64 = matrix;
+    if (is_2d) {
+        values[0] = matrix[0];
+        values[1] = matrix[1];
+        values[2] = matrix[4];
+        values[3] = matrix[5];
+        values[4] = matrix[12];
+        values[5] = matrix[13];
+    }
     const consolidated = try Transform.fromParsed(.{
-        .kind = .matrix,
+        .kind = if (is_2d) .matrix else .matrix3d,
         .matrix = matrix,
         .values = values,
-        .count = 6,
-        .is_2d = true,
+        .count = if (is_2d) 6 else 16,
+        .is_2d = is_2d,
     }, frame);
     consolidated.acquireRef();
     errdefer consolidated.releaseRef(frame._page);
@@ -199,8 +202,9 @@ fn attach(self: *TransformList, transform: *Transform) void {
     });
 }
 
-fn mutateTransform(context: *anyopaque, transform: *Transform, state: Transform.State, frame: *Frame) anyerror!void {
+fn mutateTransform(context: *anyopaque, transform: *Transform, state: Transform.State) anyerror!void {
     const self: *TransformList = @ptrCast(@alignCast(context));
+    const frame = self._frame;
     try self.sync(frame);
     if (!transform.isAttachedTo(self)) {
         transform.applyStateRaw(state);
@@ -214,24 +218,41 @@ fn mutateTransform(context: *anyopaque, transform: *Transform, state: Transform.
 }
 
 fn sync(self: *TransformList, frame: *Frame) !void {
+    self.releaseRetired(frame._page);
+
     const raw = self._element.getAttributeSafe(self._attr_name) orelse "";
-    if (self._snapshot) |snapshot| if (std.mem.eql(u8, snapshot, raw)) return;
-    const snapshot = try frame.arena.dupe(u8, raw);
+    if (self._synced and std.mem.eql(u8, self._snapshot.items, raw)) return;
+
     var parsed = parse(raw, frame) catch |err| switch (err) {
         error.SyntaxError => std.ArrayList(*Transform).empty,
         else => return err,
     };
     errdefer for (parsed.items) |transform| transform.releaseRef(frame._page);
 
-    try self._items.ensureTotalCapacity(frame.arena, parsed.items.len);
+    try self._snapshot.ensureTotalCapacity(frame.arena, raw.len);
     try self._retired.ensureUnusedCapacity(frame.arena, self._items.items.len);
+    try self._items.ensureTotalCapacity(frame.arena, parsed.items.len);
+
+    self._synced = false;
+    self._snapshot.clearRetainingCapacity();
+    self._snapshot.appendSliceAssumeCapacity(raw);
     self.retireAllAssumeCapacity();
     for (parsed.items) |transform| {
         self._items.appendAssumeCapacity(transform);
         self.attach(transform);
     }
     parsed.clearRetainingCapacity();
-    self._snapshot = snapshot;
+    self._synced = true;
+}
+
+// A retired item must outlive the operation that retired it: removeItem's
+// return value has no JS wrapper until the bridge wraps it after we return.
+// By the next operation, anything still reachable holds its own ref.
+fn releaseRetired(self: *TransformList, page: *Page) void {
+    for (self._retired.items) |transform| {
+        transform.releaseRef(page);
+    }
+    self._retired.clearRetainingCapacity();
 }
 
 fn parse(raw: []const u8, frame: *Frame) !std.ArrayList(*Transform) {
@@ -282,9 +303,12 @@ fn setAttributeWithOverride(self: *TransformList, index: usize, state: Transform
 }
 
 fn commitAttribute(self: *TransformList, serialized: []const u8, frame: *Frame) !void {
-    const snapshot = try frame.arena.dupe(u8, serialized);
+    try self._snapshot.ensureTotalCapacity(frame.arena, serialized.len);
     try self._element.setAttributeSafe(self._attr_name, .wrap(serialized), frame);
-    self._snapshot = snapshot;
+    self._synced = false;
+    self._snapshot.clearRetainingCapacity();
+    self._snapshot.appendSliceAssumeCapacity(serialized);
+    self._synced = true;
 }
 
 pub const JsApi = struct {
